@@ -1,0 +1,139 @@
+import SwiftUI
+import AppKit
+
+@main
+struct LessApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var appDatabase: AppDatabase
+
+    init() {
+        do {
+            let db = AppDatabase.shared
+            _appDatabase = State(wrappedValue: db)
+        }
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environment(\.appDatabase, appDatabase)
+                .frame(minWidth: 900, minHeight: 600)
+        }
+        .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Less is More") {
+                    NSApp.sendAction(#selector(AppDelegate.showAbout), to: nil, from: nil)
+                }
+            }
+            CommandGroup(replacing: .newItem) {
+                Button("Import Documents...") {
+                    NotificationCenter.default.post(name: .importDocuments, object: nil)
+                }
+                .keyboardShortcut("i", modifiers: [.command])
+
+                Button("Capture Receipt...") {
+                    NotificationCenter.default.post(name: .captureReceipt, object: nil)
+                }
+                .keyboardShortcut("k", modifiers: [.command])
+
+                Button("Log Consumption...") {
+                    NotificationCenter.default.post(name: .logConsumption, object: nil)
+                }
+                .keyboardShortcut("l", modifiers: [.command])
+
+                Divider()
+
+                Button("Gmail Import...") {
+                    NotificationCenter.default.post(name: .gmailImport, object: nil)
+                }
+                .keyboardShortcut("g", modifiers: [.command])
+            }
+            CommandGroup(after: .sidebar) {
+                Button("Show Dashboard") {
+                    NotificationCenter.default.post(name: .showDashboard, object: nil)
+                }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
+
+                Button("Show Insights") {
+                    NotificationCenter.default.post(name: .showInsights, object: nil)
+                }
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+            }
+            CommandGroup(after: .importExport) {
+                Button("Run Analysis...") {
+                    NotificationCenter.default.post(name: .runAnalysis, object: nil)
+                }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+            }
+        }
+        .defaultSize(width: 1200, height: 800)
+
+        Window("Capture Receipt", id: "receipt-capture") {
+            ReceiptCaptureView()
+                .environment(\.appDatabase, appDatabase)
+        }
+        .defaultSize(width: 560, height: 620)
+
+        Window("Log Consumption", id: "manual-entry") {
+            ManualEntryView()
+                .environment(\.appDatabase, appDatabase)
+        }
+        .defaultSize(width: 450, height: 420)
+
+        Window("Gmail Import", id: "gmail-import") {
+            GmailImportView()
+                .environment(\.appDatabase, appDatabase)
+        }
+        .defaultSize(width: 620, height: 600)
+
+        Settings {
+            SettingsView()
+        }
+    }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        true
+    }
+
+    @objc func showAbout() {
+        if let existing = NSApp.windows.first(where: { $0.identifier?.rawValue == "about-less" }) {
+            existing.makeKeyAndOrderFront(nil)
+            return
+        }
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 340, height: 480),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.identifier = NSUserInterfaceItemIdentifier("about-less")
+        window.title = "About Less is More"
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.contentView = NSHostingView(rootView: AboutView())
+        window.makeKeyAndOrderFront(nil)
+    }
+}
+
+extension Notification.Name {
+    static let importDocuments = Notification.Name("importDocuments")
+    static let showDashboard = Notification.Name("showDashboard")
+    static let showInsights = Notification.Name("showInsights")
+    static let runAnalysis = Notification.Name("runAnalysis")
+    static let captureReceipt = Notification.Name("captureReceipt")
+    static let logConsumption = Notification.Name("logConsumption")
+    static let gmailImport = Notification.Name("gmailImport")
+}

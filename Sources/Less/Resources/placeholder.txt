@@ -1,0 +1,1 @@
+This directory holds app resources. Replace with actual assets.
