@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+.build/
+DerivedData/
+*.xcarchive
+.swiftpm/
+
+# Xcode user state
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
+
+# DMG build output
+*.dmg
