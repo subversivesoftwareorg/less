@@ -6,10 +6,44 @@ struct DashboardView: View {
     @Environment(\.openWindow) private var openWindow
     @State private var viewModel: DashboardViewModel?
     @State private var documentsViewModel: DocumentsViewModel?
+    @State private var dismissedAIWarning = false
+
+    private var aiWarning: (message: String, detail: String)? {
+        guard !dismissedAIWarning else { return nil }
+        let settings = AppSettings.shared
+
+        if settings.selectedProvider == "ondevice" {
+            if !LLMProviderFactory.onDeviceAvailable {
+                let reason = LLMProviderFactory.onDeviceUnavailableReason ?? "On-device AI is unavailable."
+                return (
+                    reason,
+                    "Less is More needs AI to analyze your documents. Configure a cloud provider (Anthropic or OpenAI-compatible) in Settings, or update to macOS 26 with Apple Intelligence enabled."
+                )
+            }
+        } else {
+            if LLMProviderFactory.create() == nil {
+                return (
+                    "No API key configured for \(settings.selectedProvider == "anthropic" ? "Anthropic" : "your cloud provider").",
+                    "Less is More needs an AI provider to analyze documents. Add your API key in Settings."
+                )
+            }
+        }
+        return nil
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // AI provider warning
+                if let warning = aiWarning {
+                    AIWarningBanner(
+                        message: warning.message,
+                        detail: warning.detail,
+                        onDismiss: { dismissedAIWarning = true }
+                    )
+                    .padding(.horizontal)
+                }
+
                 // Drop zone
                 DropZoneView { urls in
                     documentsViewModel?.importPDFs(urls: urls)
@@ -238,6 +272,57 @@ struct CategoryBreakdownChart: View {
     }
 }
 
+// MARK: - AI Warning Banner
+
+struct AIWarningBanner: View {
+    let message: String
+    let detail: String
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title3)
+                .foregroundStyle(.orange)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(message)
+                    .font(.callout)
+                    .fontWeight(.medium)
+
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button("Open Settings\u{2026}") {
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                }
+                .font(.caption)
+                .padding(.top, 2)
+            }
+
+            Spacer()
+
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
 // MARK: - Placeholder for empty state
 
 struct DashboardPlaceholderView: View {
@@ -247,19 +332,13 @@ struct DashboardPlaceholderView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(.secondary)
 
-            Text("Welcome to Less")
+            Text("Welcome to Less is More")
                 .font(.largeTitle)
                 .fontWeight(.semibold)
 
             Text("Drop PDF receipts, credit card statements, or utility bills here to get started.")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 400)
-
-            Text("Configure your AI provider in Settings to enable document analysis.")
-                .font(.callout)
-                .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
         }
