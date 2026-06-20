@@ -73,36 +73,6 @@ let package = Package(
             resources: [.copy("PrivacyInfo.xcprivacy")],
             cSettings: cSettings,
             swiftSettings: swiftSettings),
-        .testTarget(
-            name: "GRDBTests",
-            dependencies: ["GRDB"],
-            path: "Tests",
-            exclude: [
-                "CocoaPods",
-                "Crash",
-                "CustomSQLite",
-                "GRDBManualInstall",
-                "GRDBTests/getThreadsCount.c",
-                "Info.plist",
-                "Performance",
-                "SPM",
-                "Swift6Migration",
-                "generatePerformanceReport.rb",
-                "parsePerformanceTests.rb",
-            ],
-            resources: [
-                .copy("GRDBTests/Betty.jpeg"),
-                .copy("GRDBTests/InflectionsTests.json"),
-                .copy("GRDBTests/Issue1383.sqlite"),
-                .copy("GRDBTests/db.SQLCipher3"),
-            ],
-            cSettings: cSettings,
-            swiftSettings: swiftSettings + [
-                // Tests still use the Swift 5 language mode.
-                .swiftLanguageMode(.v5),
-                .enableUpcomingFeature("InferSendableFromCaptures"),
-                .enableUpcomingFeature("GlobalActorIsolatedTypesUsability"),
-            ])
     ],
     swiftLanguageModes: [.v6]
 )

@@ -1,10 +1,14 @@
 import SwiftUI
 import AppKit
+import Sparkle
 
 @main
 struct LessApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var appDatabase: AppDatabase
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil
+    )
 
     init() {
         do {
@@ -24,6 +28,9 @@ struct LessApp: App {
                 Button("About Less is More") {
                     NSApp.sendAction(#selector(AppDelegate.showAbout), to: nil, from: nil)
                 }
+            }
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesView(updater: updaterController.updater)
             }
             CommandGroup(replacing: .newItem) {
                 Button("Import Documents...") {
