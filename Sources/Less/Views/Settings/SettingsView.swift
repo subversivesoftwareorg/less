@@ -17,6 +17,14 @@ struct SettingsView: View {
                     Text("OpenAI-Compatible").tag("openai-compatible")
                 }
 
+                if viewModel.selectedProvider == "anthropic" {
+                    Picker("Model", selection: $viewModel.selectedModel) {
+                        Text("Claude Sonnet 4.6").tag("claude-sonnet-4-6")
+                        Text("Claude Opus 4.6").tag("claude-opus-4-6")
+                        Text("Claude Opus 4.7").tag("claude-opus-4-7")
+                    }
+                }
+
                 if viewModel.selectedProvider == "ondevice" {
                     onDeviceStatusView
                 }

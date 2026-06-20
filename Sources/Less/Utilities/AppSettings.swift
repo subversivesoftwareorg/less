@@ -16,10 +16,14 @@ import Observation
     var llmBaseURL: String {
         didSet { UserDefaults.standard.set(llmBaseURL, forKey: "llmBaseURL") }
     }
+    var selectedModel: String {
+        didSet { UserDefaults.standard.set(selectedModel, forKey: "selectedModel") }
+    }
 
     private init() {
         debugLoggingEnabled = UserDefaults.standard.bool(forKey: "debugLoggingEnabled")
         selectedProvider = UserDefaults.standard.string(forKey: "selectedProvider") ?? "ondevice"
         llmBaseURL = UserDefaults.standard.string(forKey: "llmBaseURL") ?? ""
+        selectedModel = UserDefaults.standard.string(forKey: "selectedModel") ?? "claude-sonnet-4-6"
     }
 }

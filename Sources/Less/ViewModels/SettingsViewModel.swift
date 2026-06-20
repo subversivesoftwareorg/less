@@ -3,6 +3,7 @@ import Observation
 
 @Observable final class SettingsViewModel {
     var selectedProvider: String
+    var selectedModel: String
     var apiKey: String = ""
     var baseURL: String
     var hasAPIKey: Bool = false
@@ -13,6 +14,7 @@ import Observation
     init() {
         let settings = AppSettings.shared
         self.selectedProvider = settings.selectedProvider
+        self.selectedModel = settings.selectedModel
         self.baseURL = settings.llmBaseURL
         self.hasAPIKey = KeychainHelper.exists(account: "llm-api-key")
         if let data = try? KeychainHelper.load(account: "llm-api-key"),
@@ -24,11 +26,12 @@ import Observation
     func saveSettings() {
         let settings = AppSettings.shared
         settings.selectedProvider = selectedProvider
+        settings.selectedModel = selectedModel
         settings.llmBaseURL = baseURL
         saveAPIKeyIfNeeded()
         validationMessage = "Settings saved."
         validationSuccess = true
-        dlog("Settings saved: provider=\(selectedProvider)", category: "Settings")
+        dlog("Settings saved: provider=\(selectedProvider) model=\(selectedModel)", category: "Settings")
     }
 
     func clearAPIKey() {
@@ -40,9 +43,9 @@ import Observation
     }
 
     func validateConnection() {
-        // Save settings first so the factory can find the key
         let settings = AppSettings.shared
         settings.selectedProvider = selectedProvider
+        settings.selectedModel = selectedModel
         settings.llmBaseURL = baseURL
         saveAPIKeyIfNeeded()
 

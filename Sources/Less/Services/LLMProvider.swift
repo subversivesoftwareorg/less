@@ -66,7 +66,7 @@ struct AnthropicProvider: LLMProvider {
     let apiKey: String
     let model: String
 
-    init(apiKey: String, model: String = "claude-opus-4-20250918") {
+    init(apiKey: String, model: String = "claude-sonnet-4-6") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -324,7 +324,7 @@ enum LLMProviderFactory {
                   let key = String(data: keyData, encoding: .utf8), !key.isEmpty else {
                 return nil
             }
-            return AnthropicProvider(apiKey: key)
+            return AnthropicProvider(apiKey: key, model: settings.selectedModel)
 
         case "openai-compatible":
             guard let keyData = try? KeychainHelper.load(account: "llm-api-key"),
