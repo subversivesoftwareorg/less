@@ -8,7 +8,7 @@ struct LessApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var appDatabase: AppDatabase
     private let updaterController = SPUStandardUpdaterController(
-        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil
+        startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil
     )
 
     init() {
@@ -25,6 +25,10 @@ struct LessApp: App {
                 .frame(minWidth: 900, minHeight: 600)
                 .onOpenURL { url in
                     handleIncomingURL(url)
+                }
+                .task {
+                    try? await Task.sleep(for: .seconds(2))
+                    try? updaterController.startUpdater()
                 }
         }
         .commands {
@@ -66,6 +70,11 @@ struct LessApp: App {
                     NotificationCenter.default.post(name: .showInsights, object: nil)
                 }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
+
+                Button("Ask AI") {
+                    NotificationCenter.default.post(name: .showAskAI, object: nil)
+                }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
             }
             CommandGroup(after: .importExport) {
                 Button("Run Analysis...") {
@@ -112,18 +121,24 @@ struct LessApp: App {
 
             let processor = DocumentProcessor(database: appDatabase)
             let date = Date(timeIntervalSince1970: payload.dateTimestamp)
-            _ = try? await processor.importEmailText(
-                subject: payload.subject,
-                text: payload.body,
-                date: date,
-                htmlData: nil
-            )
+
+            let content = UNMutableNotificationContent()
+            do {
+                _ = try await processor.importEmailText(
+                    subject: payload.subject,
+                    text: payload.body,
+                    date: date,
+                    htmlData: nil
+                )
+                content.title = "Email Imported"
+                content.body = payload.subject
+            } catch {
+                content.title = "Email Saved (AI parsing failed)"
+                content.body = "\(payload.subject) — \(error.localizedDescription)"
+            }
 
             NotificationCenter.default.post(name: .emailImported, object: nil)
 
-            let content = UNMutableNotificationContent()
-            content.title = "Email Imported"
-            content.body = payload.subject
             let request = UNNotificationRequest(
                 identifier: "email-import-\(Date.now.timeIntervalSince1970)",
                 content: content,
@@ -185,4 +200,5 @@ extension Notification.Name {
     static let captureReceipt = Notification.Name("captureReceipt")
     static let logConsumption = Notification.Name("logConsumption")
     static let emailImported = Notification.Name("emailImported")
+    static let showAskAI = Notification.Name("showAskAI")
 }

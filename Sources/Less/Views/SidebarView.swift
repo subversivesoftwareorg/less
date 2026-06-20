@@ -39,6 +39,9 @@ struct SidebarView: View {
 
                 Label("All Line Items", systemImage: "list.bullet.rectangle")
                     .tag(SidebarSelection.lineItems)
+
+                Label("Ask AI", systemImage: "bubble.left.and.text.bubble.right")
+                    .tag(SidebarSelection.askAI)
             }
 
             if let vm = viewModel, !vm.periods.isEmpty {

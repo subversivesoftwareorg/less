@@ -54,6 +54,8 @@
 		A10000000000000000000032 /* PeriodView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000032 /* PeriodView.swift */; };
 		A10000000000000000000033 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000033 /* SettingsView.swift */; };
 		A10000000000000000000034 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000034 /* AppIcon.icns */; };
+		A10000000000000000000036 /* AskAIViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000036 /* AskAIViewModel.swift */; };
+		A10000000000000000000037 /* AskAIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000037 /* AskAIView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -105,6 +107,8 @@
 		B10000000000000000000033 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10000000000000000000034 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = Resources/AppIcon.icns; sourceTree = SOURCE_ROOT; };
 		B10000000000000000000035 /* Less.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Less.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000036 /* AskAIViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAIViewModel.swift; sourceTree = "<group>"; };
+		B10000000000000000000037 /* AskAIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskAIView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -189,6 +193,7 @@
 		C10000000000000000000006 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				B10000000000000000000036 /* AskAIViewModel.swift */,
 				B10000000000000000000016 /* DashboardViewModel.swift */,
 				B10000000000000000000017 /* DocumentsViewModel.swift */,
 				B10000000000000000000019 /* InsightsViewModel.swift */,
@@ -206,6 +211,7 @@
 				B1000000000000000000001E /* ContentView.swift */,
 				B1000000000000000000001F /* SidebarView.swift */,
 				C10000000000000000000008 /* About */,
+				C10000000000000000000016 /* AskAI */,
 				C10000000000000000000009 /* Camera */,
 				C1000000000000000000000A /* Categories */,
 				C1000000000000000000000B /* Components */,
@@ -226,6 +232,14 @@
 				B10000000000000000000020 /* AboutView.swift */,
 			);
 			path = About;
+			sourceTree = "<group>";
+		};
+		C10000000000000000000016 /* AskAI */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000037 /* AskAIView.swift */,
+			);
+			path = AskAI;
 			sourceTree = "<group>";
 		};
 		C10000000000000000000009 /* Camera */ = {
@@ -411,6 +425,8 @@
 			files = (
 				A10000000000000000000020 /* AboutView.swift in Sources */,
 				A10000000000000000000003 /* AnalysisRun.swift in Sources */,
+				A10000000000000000000036 /* AskAIViewModel.swift in Sources */,
+				A10000000000000000000037 /* AskAIView.swift in Sources */,
 				A10000000000000000000002 /* AppDatabase.swift in Sources */,
 				A10000000000000000000013 /* AppSettings.swift in Sources */,
 				A10000000000000000000021 /* CameraPreviewView.swift in Sources */,

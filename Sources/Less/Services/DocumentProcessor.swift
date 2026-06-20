@@ -96,12 +96,12 @@ actor DocumentProcessor {
         )
         try database.saveDocument(&doc)
 
-        do {
-            guard let provider = LLMProviderFactory.create() else {
-                try database.updateDocumentStatus(doc.id!, status: .completed)
-                return doc
-            }
+        guard let provider = LLMProviderFactory.create() else {
+            try database.updateDocumentStatus(doc.id!, status: .completed)
+            return doc
+        }
 
+        do {
             try database.updateDocumentStatus(doc.id!, status: .processing)
             let parsed = try await parseWithAI(text: text, provider: provider)
 
@@ -117,7 +117,8 @@ actor DocumentProcessor {
             dlog("Imported email '\(subject)': \(lineItems.count) line items", category: "DocumentProcessor")
             return doc
         } catch {
-            try? database.updateDocumentStatus(doc.id!, status: .failed, errorMessage: error.localizedDescription)
+            dlog("AI parsing failed for email '\(subject)': \(error.localizedDescription)", category: "DocumentProcessor")
+            try? database.updateDocumentStatus(doc.id!, status: .awaitingAI, errorMessage: error.localizedDescription)
             throw error
         }
     }

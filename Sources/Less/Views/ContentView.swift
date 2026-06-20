@@ -5,6 +5,7 @@ enum SidebarSelection: Hashable {
     case insights
     case documents
     case lineItems
+    case askAI
     case period(year: Int, month: Int)
     case category(Int64)
 }
@@ -29,6 +30,8 @@ struct ContentView: View {
                     DocumentListView()
                 case .lineItems:
                     LineItemsView()
+                case .askAI:
+                    AskAIView()
                 case .period(let year, let month):
                     PeriodView(year: year, month: month)
                 case .category(let id):
@@ -48,6 +51,9 @@ struct ContentView: View {
             if !hasCompletedOnboarding {
                 showOnboarding = true
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showAskAI)) { _ in
+            selection = .askAI
         }
     }
 }
