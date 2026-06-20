@@ -8,9 +8,13 @@ DerivedData/
 # Xcode user state
 *.xcuserstate
 xcuserdata/
+xcshareddata/
 
 # macOS
 .DS_Store
 
 # DMG build output
 *.dmg
+
+# Weekly reviews
+WEEKLY_REVIEW*
