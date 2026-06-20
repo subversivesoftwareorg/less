@@ -66,7 +66,7 @@ struct AnthropicProvider: LLMProvider {
     let apiKey: String
     let model: String
 
-    init(apiKey: String, model: String = "claude-sonnet-4-20250514") {
+    init(apiKey: String, model: String = "claude-opus-4-20250918") {
         self.apiKey = apiKey
         self.model = model
     }
@@ -172,12 +172,52 @@ struct OpenAICompatibleProvider: LLMProvider {
 // MARK: - Apple On-Device Provider (Foundation Models)
 
 @available(macOS 26.0, *)
+@Generable
+struct OnDeviceLineItem {
+    @Guide(description: "Transaction date in YYYY-MM-DD format")
+    var date: String
+
+    @Guide(description: "Vendor or merchant name")
+    var vendor: String
+
+    @Guide(description: "Brief description of the charge or transaction")
+    var description: String
+
+    @Guide(description: "Dollar amount: positive for charges and costs, negative for refunds and credits")
+    var amount: Double
+
+    @Guide(description: "One of: Housing, Utilities, Groceries, Dining, Transportation, Entertainment, Subscriptions, Healthcare, Insurance, Shopping, Travel, Education, Personal Care, Gifts, Fees & Charges, Other")
+    var category: String
+
+    @Guide(description: "Consumption quantity for utility items such as kWh or therms")
+    var quantity: Double?
+
+    @Guide(description: "Unit of consumption: kWh, therms, CCF, gallons, or cuft")
+    var unit: String?
+}
+
+@available(macOS 26.0, *)
+@Generable
+struct OnDeviceDocumentResult {
+    @Guide(description: "One of: credit_card_statement, receipt, utility_bill, bank_statement, other")
+    var documentType: String
+
+    @Guide(description: "Statement period start date in YYYY-MM-DD format")
+    var periodStart: String?
+
+    @Guide(description: "Statement period end date in YYYY-MM-DD format")
+    var periodEnd: String?
+
+    @Guide(description: "Individual charges, transactions, or line items from the document")
+    var lineItems: [OnDeviceLineItem]
+}
+
+@available(macOS 26.0, *)
 struct OnDeviceProvider: LLMProvider {
     let name = "Apple On-Device"
 
-    func complete(systemPrompt: String, userMessage: String) async throws -> String {
+    private func ensureAvailable() throws {
         let model = SystemLanguageModel.default
-
         guard model.isAvailable else {
             switch model.availability {
             case .unavailable(.deviceNotEligible):
@@ -190,24 +230,40 @@ struct OnDeviceProvider: LLMProvider {
                 throw OnDeviceProviderError.unavailable
             }
         }
+    }
+
+    private func truncate(_ text: String, maxChars: Int = 8000) -> String {
+        guard text.count > maxChars else { return text }
+        return String(text.prefix(maxChars))
+    }
+
+    func complete(systemPrompt: String, userMessage: String) async throws -> String {
+        try ensureAvailable()
 
         let session = LanguageModelSession(instructions: systemPrompt)
-
-        // On-device model has a 4096-token context (~12K chars).
-        // Truncate input to fit within context alongside instructions and response.
-        let maxInputChars = 8000
-        let truncatedMessage: String
-        if userMessage.count > maxInputChars {
-            truncatedMessage = String(userMessage.prefix(maxInputChars)) + "\n\n[Document truncated due to length. Extract what you can from the text above.]"
-        } else {
-            truncatedMessage = userMessage
-        }
-
-        let response = try await session.respond(to: truncatedMessage)
+        let response = try await session.respond(to: truncate(userMessage))
         return response.content
     }
 
-    /// Check if the on-device model is available on this machine.
+    func parseDocument(text: String) async throws -> OnDeviceDocumentResult {
+        try ensureAvailable()
+
+        let instructions = """
+            Extract financial data from this document. Identify every individual \
+            charge, transaction, or line item with its date, vendor, dollar amount, \
+            and category. Charges and bills the user owes are positive amounts. \
+            Refunds, credits, and cashback are negative amounts. For utility bills \
+            (electricity, gas, water), also extract consumption quantity and unit.
+            """
+
+        let session = LanguageModelSession(instructions: instructions)
+        let response = try await session.respond(
+            to: truncate(text),
+            generating: OnDeviceDocumentResult.self
+        )
+        return response.content
+    }
+
     static var isAvailable: Bool {
         SystemLanguageModel.default.isAvailable
     }

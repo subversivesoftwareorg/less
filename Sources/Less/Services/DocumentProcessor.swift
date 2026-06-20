@@ -126,6 +126,10 @@ actor DocumentProcessor {
     // MARK: - AI Parsing
 
     private func parseWithAI(text: String, provider: LLMProvider) async throws -> ParsedDocument {
+        if #available(macOS 26.0, *), let onDevice = provider as? OnDeviceProvider {
+            return try await parseWithOnDeviceAI(text: text, provider: onDevice)
+        }
+
         let systemPrompt = """
             You are a document parser for consumption tracking. Analyze the provided text extracted \
             from a PDF (receipt, credit card statement, utility bill, or bank statement) and extract \
@@ -254,6 +258,49 @@ actor DocumentProcessor {
             periodStart: parsed.periodStart,
             periodEnd: parsed.periodEnd,
             lineItems: items
+        )
+    }
+
+    // MARK: - On-Device Structured Parsing
+
+    @available(macOS 26.0, *)
+    private func parseWithOnDeviceAI(text: String, provider: OnDeviceProvider) async throws -> ParsedDocument {
+        let result = try await provider.parseDocument(text: text)
+        var parsed = convertOnDeviceResult(result)
+        parsed = normalizeAmounts(parsed)
+        return parsed
+    }
+
+    @available(macOS 26.0, *)
+    private func convertOnDeviceResult(_ result: OnDeviceDocumentResult) -> ParsedDocument {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        let docType: DocumentType? = switch result.documentType {
+        case "credit_card_statement": .creditCardStatement
+        case "receipt": .receipt
+        case "utility_bill": .utilityBill
+        case "bank_statement": .bankStatement
+        default: .other
+        }
+
+        let lineItems = result.lineItems.map { item in
+            ParsedLineItem(
+                date: dateFormatter.date(from: item.date) ?? Date(),
+                vendor: item.vendor,
+                description: item.description,
+                amount: item.amount,
+                suggestedCategory: item.category,
+                quantity: item.quantity,
+                unit: item.unit
+            )
+        }
+
+        return ParsedDocument(
+            documentType: docType,
+            periodStart: result.periodStart.flatMap { dateFormatter.date(from: $0) },
+            periodEnd: result.periodEnd.flatMap { dateFormatter.date(from: $0) },
+            lineItems: lineItems
         )
     }
 
