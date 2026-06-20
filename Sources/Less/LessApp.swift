@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Sparkle
+import UserNotifications
 
 @main
 struct LessApp: App {
@@ -22,6 +23,9 @@ struct LessApp: App {
             ContentView()
                 .environment(\.appDatabase, appDatabase)
                 .frame(minWidth: 900, minHeight: 600)
+                .onOpenURL { url in
+                    handleIncomingURL(url)
+                }
         }
         .commands {
             CommandGroup(replacing: .appInfo) {
@@ -88,6 +92,53 @@ struct LessApp: App {
             SettingsView()
         }
     }
+
+    private func handleIncomingURL(_ url: URL) {
+        guard url.scheme == "less", url.host == "import-email" else { return }
+
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let filePath = components.queryItems?.first(where: { $0.name == "file" })?.value else {
+            return
+        }
+
+        let fileURL = URL(fileURLWithPath: filePath)
+        Task {
+            defer { try? FileManager.default.removeItem(at: fileURL) }
+
+            guard let data = try? Data(contentsOf: fileURL),
+                  let payload = try? JSONDecoder().decode(EmailPayload.self, from: data) else {
+                return
+            }
+
+            let processor = DocumentProcessor(database: appDatabase)
+            let date = Date(timeIntervalSince1970: payload.dateTimestamp)
+            _ = try? await processor.importEmailText(
+                subject: payload.subject,
+                text: payload.body,
+                date: date,
+                htmlData: nil
+            )
+
+            NotificationCenter.default.post(name: .emailImported, object: nil)
+
+            let content = UNMutableNotificationContent()
+            content.title = "Email Imported"
+            content.body = payload.subject
+            let request = UNNotificationRequest(
+                identifier: "email-import-\(Date.now.timeIntervalSince1970)",
+                content: content,
+                trigger: nil
+            )
+            try? await UNUserNotificationCenter.current().add(request)
+        }
+    }
+}
+
+private struct EmailPayload: Codable {
+    let subject: String
+    let body: String
+    let sender: String
+    let dateTimestamp: TimeInterval
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -133,5 +184,5 @@ extension Notification.Name {
     static let runAnalysis = Notification.Name("runAnalysis")
     static let captureReceipt = Notification.Name("captureReceipt")
     static let logConsumption = Notification.Name("logConsumption")
-
+    static let emailImported = Notification.Name("emailImported")
 }
