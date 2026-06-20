@@ -13,7 +13,18 @@ final class AppDatabase: Sendable {
             let key = try AppDatabase.databaseKey()
             return try AppDatabase(url: url, key: key)
         } catch {
-            fatalError("Failed to open database: \(error)")
+            dlog("Database open failed: \(error). Attempting recovery…", category: "AppDatabase")
+            do {
+                let url = try AppDatabase.databaseURL()
+                if FileManager.default.fileExists(atPath: url.path) {
+                    try FileManager.default.removeItem(at: url)
+                }
+                KeychainHelper.delete(account: "database-encryption-key")
+                let key = try AppDatabase.databaseKey()
+                return try AppDatabase(url: url, key: key)
+            } catch {
+                fatalError("Failed to recover database: \(error)")
+            }
         }
     }()
 
@@ -58,8 +69,10 @@ final class AppDatabase: Sendable {
 
     private static func databaseKey() throws -> Data {
         let account = "database-encryption-key"
-        if let existing = try? KeychainHelper.load(account: account) {
-            return existing
+        do {
+            return try KeychainHelper.load(account: account)
+        } catch KeychainError.itemNotFound {
+            // First launch — fall through to generate a new key
         }
         var key = Data(count: 32)
         let result = key.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!) }
