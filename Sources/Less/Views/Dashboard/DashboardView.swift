@@ -58,9 +58,6 @@ struct DashboardView: View {
                     ActionButton(icon: "plus.circle.fill", label: "Log Consumption") {
                         openWindow(id: "manual-entry")
                     }
-                    ActionButton(icon: "envelope.fill", label: "Gmail Import") {
-                        openWindow(id: "gmail-import")
-                    }
                 }
                 .padding(.horizontal)
 

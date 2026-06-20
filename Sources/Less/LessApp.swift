@@ -50,10 +50,7 @@ struct LessApp: App {
 
                 Divider()
 
-                Button("Gmail Import...") {
-                    NotificationCenter.default.post(name: .gmailImport, object: nil)
-                }
-                .keyboardShortcut("g", modifiers: [.command])
+
             }
             CommandGroup(after: .sidebar) {
                 Button("Show Dashboard") {
@@ -86,12 +83,6 @@ struct LessApp: App {
                 .environment(\.appDatabase, appDatabase)
         }
         .defaultSize(width: 450, height: 420)
-
-        Window("Gmail Import", id: "gmail-import") {
-            GmailImportView()
-                .environment(\.appDatabase, appDatabase)
-        }
-        .defaultSize(width: 620, height: 600)
 
         Settings {
             SettingsView()
@@ -142,5 +133,5 @@ extension Notification.Name {
     static let runAnalysis = Notification.Name("runAnalysis")
     static let captureReceipt = Notification.Name("captureReceipt")
     static let logConsumption = Notification.Name("logConsumption")
-    static let gmailImport = Notification.Name("gmailImport")
+
 }

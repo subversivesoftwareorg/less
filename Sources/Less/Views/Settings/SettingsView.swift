@@ -85,24 +85,6 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Gmail Integration") {
-                TextField("Google Cloud Client ID", text: Binding(
-                    get: { UserDefaults.standard.string(forKey: "gmailClientId") ?? "" },
-                    set: { UserDefaults.standard.set($0, forKey: "gmailClientId") }
-                ))
-                .textFieldStyle(.roundedBorder)
-
-                SecureField("Google Cloud Client Secret", text: Binding(
-                    get: { UserDefaults.standard.string(forKey: "gmailClientSecret") ?? "" },
-                    set: { UserDefaults.standard.set($0, forKey: "gmailClientSecret") }
-                ))
-                .textFieldStyle(.roundedBorder)
-
-                Text("Create a Desktop OAuth credential at console.cloud.google.com with the Gmail API enabled. Add http://127.0.0.1:8850 as an authorized redirect URI.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
             Section("Debug") {
                 Toggle("Debug Logging", isOn: Binding(
                     get: { AppSettings.shared.debugLoggingEnabled },
